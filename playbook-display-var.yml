@@ -1,0 +1,10 @@
+---
+- name: Prerequisites
+  hosts: tig
+  gather_facts: yes
+  remote_user: jlg
+  become: true
+  tasks:
+    - name: Affichage variable
+      debug:
+        msg: "{{ influxdb_database_name }}"
