@@ -4,7 +4,34 @@
   gather_facts: yes
   remote_user: jlg
   become: true
+  vars:
+    my_var: "this is my variable"
+    my_list:
+      - first
+      - second
+      - third
+    my_dict:
+      field1: first
+      field2: second
+      field3: third
+    list_of_dict:
+      - field1: first
+        field2: second
+      - field1: third
+        field2: fourth
+
   tasks:
-    - name: Affichage variable
+    - name: Variable didplay
       debug:
-        msg: "{{ influxdb_database_name }}"
+        msg: "{{ my_var }}"
+    - name: List display
+      debug:
+        msg: "{{ my_list[0] }}"
+    - name: Dict display
+      debug:
+        msg: "{{ my_dict['field1'] }}"
+    - name: List of dict display
+      debug:
+        msg: "{{ item.field1 }}"
+      loop: "{{ list_of_dict }}"
+
