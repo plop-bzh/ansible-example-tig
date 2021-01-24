@@ -40,3 +40,22 @@
         name: influxdb
         enabled: yes
         state: started
+
+    - name: Wait for _internal database to be created after initial installation
+      uri:
+        url: "http://127.0.0.1:8086/query"
+        method: POST
+        body: 'q=SHOW DATABASES'
+      register: response
+      until: '"_internal" in (response | to_json)'
+      retries: 5
+      delay: 5
+
+    - name: Database created
+      uri:
+        url: "http://127.0.0.1:8086/query"
+        method: POST
+        body: 'q=CREATE DATABASE "{{ influxdb_database_name }}"'
+      register: response
+      changed_when: response.status == 200
+      when: "influxdb_database_name not in (response.json | json_query('results[0].series[0].values[*][0]'))"
