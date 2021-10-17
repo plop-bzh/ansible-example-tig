@@ -24,6 +24,16 @@
         repo: "deb https://repos.influxdata.com/{{ ansible_facts['distribution']|lower }} {{ ansible_facts['distribution_release'] }} stable"
         state: present
 
+    - name: Add Grafana Apt key
+      apt_key:
+        url: https://packages.grafana.com/gpg.key
+        state: present
+
+    - name: Add Grafana stable Apt repository
+      apt_repository:
+        repo: deb https://packages.grafana.com/oss/deb stable main
+        state: present
+
 - name: InfluxDB
   hosts: tig
   remote_user: jlg
@@ -59,3 +69,37 @@
       register: response
       changed_when: response.status == 200
       when: "influxdb_database_name not in (response.json | json_query('results[0].series[0].values[*][0]'))"
+
+- name: Grafana
+  hosts: tig
+  remote_user: jlg
+  become: true
+  gather_facts: false
+
+  collections:
+    - community.grafana
+
+  tasks:
+    - name: Install Grafana OSS
+      apt:
+        force_apt_get: yes
+        update_cache: yes
+        pkg: grafana
+
+    - name : Start Grafana service
+      service:
+        name: grafana-server
+        enabled: yes
+        state: started
+
+    - name: Ensure Influxdb datasource exists
+      grafana_datasource:
+        name: "influxdb"
+        grafana_url: "http://127.0.0.1:3000"
+        grafana_user: "admin"
+        grafana_password: "admin"
+        org_id: "1"
+        ds_type: "influxdb"
+        ds_url: "http://127.0.0.1:8086"
+        database: "{{ influxdb_database_name }}"
+        time_interval: ">10s"
